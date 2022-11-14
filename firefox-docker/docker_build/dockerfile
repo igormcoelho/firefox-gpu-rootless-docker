@@ -1,0 +1,37 @@
+FROM ubuntu:20.04
+#FROM ubuntu:22.04  # REQUIRES SNAP (DO NOT USE UBUNTU 22.04)
+#
+# INSPIRED BY: https://hub.docker.com/r/andrewmackrodt/firefox-x11#!
+#
+ARG DEBIAN_FRONTEND=noninteractive
+#
+RUN apt update \
+   && apt install -y firefox libcanberra-gtk3-module packagekit-gtk3-module 
+#
+# support for audio
+# could test on container: speaker-test -c2 -t sine
+#
+RUN apt update \
+   && apt install -y ubuntu-restricted-extras gstreamer1.0-pulseaudio
+RUN apt update \
+   && apt install -y pulseaudio socat alsa-utils ffmpeg
+#
+# ============================================================================
+# nvidia GPU support is optional... if you don't want, just remove this block
+# Make sure the host driver (on Ubuntu 22.04) is the same as here in container
+#
+RUN ubuntu-drivers install nvidia
+RUN apt update \
+   && apt install -y nvidia-driver-520
+RUN nvidia-smi
+# ============================================================================
+#
+# debug networking
+RUN apt update \
+   && apt install -y iproute2 iputils-ping
+
+#
+ADD ./entrypoint.sh /entrypoint.sh
+#
+CMD ["/entrypoint.sh"]
+
