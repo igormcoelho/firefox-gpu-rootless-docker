@@ -156,9 +156,10 @@ Remember to fix these two lines on `firefox-docker.sh` and choose firefox `Downl
 1. Add to favorite:
 
 ```
+# NO SUDO HERE!
 $ cd desktop/
-$ cp firefox-docker.desktop .local/share/applications/
-$ cp firefox256.png .local/share/applications/
+$ cp firefox-docker.desktop ~/.local/share/applications/
+$ cp firefox256.png ~/.local/share/applications/
 $ gsettings get org.gnome.shell favorite-apps
        # => ['org.gnome.Nautilus.desktop']
 $ gsettings set org.gnome.shell favorite-apps "$(gsettings get org.gnome.shell favorite-apps | sed s/.$//), 'firefox-docker.desktop'
