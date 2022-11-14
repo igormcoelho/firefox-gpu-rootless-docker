@@ -127,6 +127,12 @@ pip3 install docker-compose
 1. Launch firefox, using the GPU or the non-GPU versions
     - 
 
+#### How to access Downloads folder?
+
+Now, firefox downloads will be located at `~/.config/firefox-docker/FirefoxDownloads`. You can bookmark it on Nautilus or create a symbolic link from the real Downloads folder.
+
+Note that container is running on `root`, but since docker is rootless, it will automatically match root files with current user id.
+
 
 ## Install locally for the user
 
