@@ -44,6 +44,6 @@ docker run --name firefox_ubuntu_gpu --rm \
   -v /run/udev/data:/run/udev/data:ro \
   -v /etc/timezone:/etc/timezone:ro \
   -v /etc/localtime:/etc/localtime:ro \
-  -v $HOME/.config/firefox-docker/FirefoxDownloads:/root/Downloads \
-  -v $HOME/.config/firefox-docker/FirefoxData:/root/.mozilla/firefox/ \
+  -v $HOME/.local/firefox-docker/FirefoxDownloads:/root/Downloads \
+  -v $HOME/.local/firefox-docker/FirefoxData:/root/.mozilla/firefox/ \
   $(whoami)/firefox 

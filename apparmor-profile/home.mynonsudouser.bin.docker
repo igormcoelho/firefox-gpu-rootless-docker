@@ -1,0 +1,38 @@
+# Last Modified: Mon Nov 14 13:53:06 2022
+include <tunables/global>
+
+# vim:syntax=apparmor
+# AppArmor policy for docker
+# ###AUTHOR###
+# ###COPYRIGHT###
+# ###COMMENT###
+# No template variables specified
+
+/home/mynonsudouser/bin/docker flags=(attach_disconnected, complain) {
+  include <abstractions/base>
+  include <abstractions/evince>
+  include <abstractions/user-tmp>
+
+  /etc/group r,
+  /etc/ld.so.cache r,
+  /etc/nsswitch.conf r,
+  /etc/passwd r,
+  /proc/stat r,
+  /proc/sys/kernel/cap_last_cap r,
+  /sys/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+  /usr/libexec/docker/cli-plugins/ r,
+  /usr/libexec/docker/cli-plugins/docker-app mrix,
+  /usr/libexec/docker/cli-plugins/docker-buildx mrix,
+  /usr/libexec/docker/cli-plugins/docker-compose mrix,
+  /usr/libexec/docker/cli-plugins/docker-scan mrix,
+  /run/*/user/*/docker.sock rw,
+  owner /home/*/.docker/** rwk,
+  owner /home/*/.local/firefox-docker/ r,
+  owner /home/*/.local/firefox-docker/** r,
+  owner /run/docker.sock rw,
+  # default is 'deny', but we are paranoid people...
+  deny @{HOME}/.config/ rw,
+  deny @{HOME}/.ssh/ rw,
+  deny @{HOME}/.bashrc rw,
+
+}
