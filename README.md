@@ -123,6 +123,8 @@ or selinux (see our **highly experimental** instructions at [DockerSELinux.md](.
 Currently, SELinux does not likely work on Ubuntu 22.04, as it is typically used on RHEL/Fedora distributions,
 so for Ubuntu 22.04 one should try apparmor.
 
+Finally, another idea for greater security is to run firefox application on another user, sharing X11 resources...
+some projects in github try to do this, but for docker this is extra challenging, but something promising for the future.
 
 ## License
 
