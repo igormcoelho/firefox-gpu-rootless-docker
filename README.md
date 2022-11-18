@@ -114,7 +114,10 @@ $ gsettings set org.gnome.shell favorite-apps "$(gsettings get org.gnome.shell f
 ### Extra: using apparmor or selinux to limit the power of rootless docker
 
 Having docker rootless is nice, but it's even better if we can constrain its access the most.
-For this, we need to install appamor (see our **highly experimental** instructions at [DockerApparmor.md](./DockerApparmor.md)),
+Note that none of the following solutions (with apparmor or selinux) are considered to be complete and secure... 
+these are just provided for learning purposes!
+
+So, we need to install appamor (see our **highly experimental** instructions at [DockerApparmor.md](./DockerApparmor.md)),
 or selinux (see our **highly experimental** instructions at [DockerSELinux.md](./DockerSELinux.md)).
 
 Currently, SELinux does not likely work on Ubuntu 22.04, as it is typically used on RHEL/Fedora distributions,

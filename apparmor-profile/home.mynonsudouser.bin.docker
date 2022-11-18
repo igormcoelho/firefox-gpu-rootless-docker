@@ -1,4 +1,4 @@
-# Last Modified: Mon Nov 14 13:53:06 2022
+# Last Modified: Thu Nov 17 20:45:28 2022
 include <tunables/global>
 
 # vim:syntax=apparmor
@@ -8,31 +8,101 @@ include <tunables/global>
 # ###COMMENT###
 # No template variables specified
 
-/home/mynonsudouser/bin/docker flags=(attach_disconnected, complain) {
-  include <abstractions/base>
-  include <abstractions/evince>
-  include <abstractions/user-tmp>
 
-  /etc/group r,
-  /etc/ld.so.cache r,
-  /etc/nsswitch.conf r,
+/home/mynonsudouser/bin/containerd flags=(attach_disconnected, audit) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/opencl-pocl>
+
+  capability,
+  network,
+  dbus,
+  mount,
+  remount,
+  umount,
+  signal,
+  ptrace,
+  pivot_root,
+  unix,
+
+  # THIS IS THE IMPORTANT PART... THE REST IS JUST SOME BLIND ACCEPTANCE OF EVERYTHING REQUIRED BY aa-logprof
+  deny /.local/share/docker/fuse-overlayfs/*/diff/@{HOME}/Documents rw,
+
+  /etc/** r,
+  /etc/*/ld.so.cache r,
+  /etc/*/modprobe.d/ r,
+  /etc/*/modprobe.d/* r,
+  @{HOME}/bin/containerd-shim-runc-v2 mrix,
+  @{HOME}/bin/dockerd mrix,
+  @{HOME}/bin/runc mrix,
+  /proc/*/cgroup r,
+  /proc/cmdline r,
+  /proc/devices r,
+  /run/dbus/system_bus_socket rw,
+  /run/systemd/private rw,
+  /sys/fs/cgroup/cgroup.controllers r,
+  /sys/fs/cgroup/user.slice/cgroup.type r,
+  /sys/fs/cgroup/user.slice/*/cgroup.type r,
+  /sys/fs/cgroup/user.slice/*/*/cgroup.type r,
+  /sys/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+  /usr/bin/bash mrix,
+  /usr/bin/busctl mrix,
+  /usr/bin/dircolors mrix,
+  /usr/bin/groups mrix,
+  /usr/bin/kmod mrix,
+  /usr/bin/ls mrix,
+  /usr/bin/touch mrix,
+  owner /dev/pts/ptmx rw,
+  owner /home/ r,
+  owner /home/*/.local/share/docker/** r,
+  owner /home/*/.local/share/docker/containerd/** k,
+  owner /home/*/.local/share/docker/containerd/daemon/** rw,
+  owner /home/*/.local/share/docker/containerd/daemon/*/ r,
+  owner /home/*/.local/share/docker/fuse-overlayfs/** w,
+  owner /home/*/.local/share/docker/fuse-overlayfs/**/ w,
+  owner /home/*/bin/containerd r,
+  owner /proc/*/cmdline r,
+  owner /proc/*/comm r,
+  owner /proc/*/fd/ r,
+  owner /proc/*/loginuid r,
+  owner /proc/*/mountinfo r,
+  owner /proc/*/oom_score_adj r,
+  owner /proc/*/oom_score_adj w,
+  owner /proc/*/sessionid r,
+  owner /proc/*/setgroups r,
+  owner /proc/*/stat r,
+  owner /proc/*/uid_map r,
+  owner /proc/sys/net/ipv4/ip_unprivileged_port_start w,
+  owner /root/.bash_history rw,
+  owner /root/.bashrc r,
+  owner /run/*/user/*/*/ w,
+  owner /run/*/user/*/*/pty.sock rw,
+  owner /run/*/user/*/docker/** rw,
+  owner /run/*/user/*/docker/containerd/**/ rw,
+  owner /run/containerd/** rw,
+  owner /run/user/*/bus rw,
+  owner /sys/fs/cgroup/user.slice/*/*/cgroup.subtree_control w,
+  owner /sys/fs/cgroup/user.slice/*/*/user.slice/** rw,
+
+}
+
+/home/mynonsudouser/bin/docker flags=(attach_disconnected, complain) {
+  # 'abstractions/base' provides @{HOME} macro
+  include <abstractions/base>
+
+  deny /.local/share/docker/fuse-overlayfs/*/diff/@{HOME}/Documents rw,
+  deny @{HOME}/.bashrc rw,
+  deny @{HOME}/.config/ rw,
+  deny @{HOME}/Documents/ rw,
+  deny @{HOME}/Pictures/ rw,
+  deny @{HOME}/Private/ rw,
+  deny @{HOME}/Videos/ rw,
+
   /etc/passwd r,
-  /proc/stat r,
-  /proc/sys/kernel/cap_last_cap r,
   /sys/kernel/mm/transparent_hugepage/hpage_pmd_size r,
   /usr/libexec/docker/cli-plugins/ r,
-  /usr/libexec/docker/cli-plugins/docker-app mrix,
-  /usr/libexec/docker/cli-plugins/docker-buildx mrix,
-  /usr/libexec/docker/cli-plugins/docker-compose mrix,
-  /usr/libexec/docker/cli-plugins/docker-scan mrix,
-  /run/*/user/*/docker.sock rw,
-  owner /home/*/.docker/** rwk,
-  owner /home/*/.local/firefox-docker/ r,
+  owner /home/*/.docker/config.json r,
+  owner /run/*/user/*/docker.sock rw,
   owner /home/*/.local/firefox-docker/** r,
-  owner /run/docker.sock rw,
-  # default is 'deny', but we are paranoid people...
-  deny @{HOME}/.config/ rw,
-  deny @{HOME}/.ssh/ rw,
-  deny @{HOME}/.bashrc rw,
 
 }

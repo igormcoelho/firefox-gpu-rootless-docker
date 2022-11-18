@@ -77,9 +77,25 @@ sudo aa-enforce /home/RENAMETHISUSER/bin/docker
 
 #### Understanding the permissions
 
-Take a look at the profile [apparmor-profile/home.mynonsudouser.bin.docker](./apparmor-profile/home.mynonsudouser.bin.docker):
+Unfortunately, the process of managing a complex process like docker takes a lot of efforts and knowledge from apparmor.
+And still, to the best of my knowledge, it is not possible to provide full security against unwanted access of local private files using apparmor (maybe selinux can do this, not apparmor).
+
+The reason is that apparmor uses full paths, and since any volume could bind the folders and files to other names, these would not be covered by any rules, thus, easily accessible.
+What we do here is a simple mechanism for avoiding **unintentional** exposure of secret user files inside docker...
+note that a bad user could simply directly access the files, if access is granted to the host system anyway.
+So, we solve this (unintentional and erroneous volume mounts) by blacklisting specific folders inside overlayfs (so we need to control both `docker` and `containerd` processes on apparmor, which is complex and not very efficient).
+
+The important line is:
 
 ```
+deny /.local/share/docker/fuse-overlayfs/*/diff/@{HOME}/Documents rw,
+```
+
+We provide AN EXAMPLE, carefully handmade using `aa-logprof`, but will likely break for different versions of docker, so this is kept for learning purposes only!
+Take a look at the full profile [apparmor-profile/home.mynonsudouser.bin.docker](./apparmor-profile/home.mynonsudouser.bin.docker):
+
+```
+# Last Modified: Thu Nov 17 20:45:28 2022
 include <tunables/global>
 
 # vim:syntax=apparmor
@@ -90,30 +106,108 @@ include <tunables/global>
 # No template variables specified
 
 
-/home/mynonsudouser/bin/docker flags=(attach_disconnected, complain) {
+/home/mynonsudouser/bin/containerd flags=(attach_disconnected, audit) {
   include <abstractions/base>
-  include <abstractions/evince>
-  include <abstractions/user-tmp>
+  include <abstractions/consoles>
+  include <abstractions/opencl-pocl>
 
-  /etc/group r,
-  /etc/ld.so.cache r,
-  /etc/nsswitch.conf r,
-  /etc/passwd r,
-  /proc/stat r,
-  /proc/sys/kernel/cap_last_cap r,
+  capability,
+  network,
+  dbus,
+  mount,
+  remount,
+  umount,
+  signal,
+  ptrace,
+  pivot_root,
+  unix,
+
+  deny /.local/share/docker/fuse-overlayfs/*/diff/@{HOME}/Documents rw,
+
+  /etc/** r,
+  /etc/*/ld.so.cache r,
+  /etc/*/modprobe.d/ r,
+  /etc/*/modprobe.d/* r,
+  @{HOME}/bin/containerd-shim-runc-v2 mrix,
+  @{HOME}/bin/dockerd mrix,
+  @{HOME}/bin/runc mrix,
+  /proc/*/cgroup r,
+  /proc/cmdline r,
+  /proc/devices r,
+  /run/dbus/system_bus_socket rw,
+  /run/systemd/private rw,
+  /sys/fs/cgroup/cgroup.controllers r,
+  /sys/fs/cgroup/user.slice/cgroup.type r,
+  /sys/fs/cgroup/user.slice/*/cgroup.type r,
+  /sys/fs/cgroup/user.slice/*/*/cgroup.type r,
   /sys/kernel/mm/transparent_hugepage/hpage_pmd_size r,
-  /usr/libexec/docker/cli-plugins/ r,
-  /usr/libexec/docker/cli-plugins/docker-app mrix,
-  /usr/libexec/docker/cli-plugins/docker-buildx mrix,
-  /usr/libexec/docker/cli-plugins/docker-compose mrix,
-  /usr/libexec/docker/cli-plugins/docker-scan mrix,
-  /run/*/user/*/docker.sock rw,
-  owner /home/*/.docker/** rwk,
-  owner /home/*/.local/firefox-docker/ r,
-  owner /home/*/.local/firefox-docker/** r,
-  owner /run/docker.sock rw,
+  /usr/bin/bash mrix,
+  /usr/bin/busctl mrix,
+  /usr/bin/dircolors mrix,
+  /usr/bin/groups mrix,
+  /usr/bin/kmod mrix,
+  /usr/bin/ls mrix,
+  /usr/bin/touch mrix,
+  owner /dev/pts/ptmx rw,
+  owner /home/ r,
+  owner /home/*/.local/share/docker/** r,
+  owner /home/*/.local/share/docker/containerd/** k,
+  owner /home/*/.local/share/docker/containerd/daemon/** rw,
+  owner /home/*/.local/share/docker/containerd/daemon/*/ r,
+  owner /home/*/.local/share/docker/fuse-overlayfs/** w,
+  owner /home/*/.local/share/docker/fuse-overlayfs/**/ w,
+  owner /home/*/bin/containerd r,
+  owner /proc/*/cmdline r,
+  owner /proc/*/comm r,
+  owner /proc/*/fd/ r,
+  owner /proc/*/loginuid r,
+  owner /proc/*/mountinfo r,
+  owner /proc/*/oom_score_adj r,
+  owner /proc/*/oom_score_adj w,
+  owner /proc/*/sessionid r,
+  owner /proc/*/setgroups r,
+  owner /proc/*/stat r,
+  owner /proc/*/uid_map r,
+  owner /proc/sys/net/ipv4/ip_unprivileged_port_start w,
+  owner /root/.bash_history rw,
+  owner /root/.bashrc r,
+  owner /run/*/user/*/*/ w,
+  owner /run/*/user/*/*/pty.sock rw,
+  owner /run/*/user/*/docker/** rw,
+  owner /run/*/user/*/docker/containerd/* rw,
+  owner /run/*/user/*/docker/containerd/** w,
+  owner /run/*/user/*/docker/containerd/**/ rw,
+  owner /run/*/user/*/docker/containerd/containerd.toml r,
+  owner /run/containerd/ w,
+  owner /run/containerd/s/ w,
+  owner /run/containerd/s/* rw,
+  owner /run/user/*/bus rw,
+  owner /sys/fs/cgroup/user.slice/*/*/cgroup.subtree_control w,
+  owner /sys/fs/cgroup/user.slice/*/*/user.slice/** rw,
 
 }
+
+/home/mynonsudouser/bin/docker flags=(attach_disconnected, complain) {
+  # 'abstractions/base' provides @{HOME} macro
+  include <abstractions/base>
+
+  deny @{HOME}/.bashrc rw,
+  deny @{HOME}/.ssh/* rw,
+  deny @{HOME}/.config/ rw,
+  deny @{HOME}/Documents/ rw,
+  deny @{HOME}/Pictures/ rw,
+  deny @{HOME}/Private/ rw,
+  deny @{HOME}/Videos/ rw,
+
+  /etc/passwd r,
+  /sys/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+  /usr/libexec/docker/cli-plugins/ r,
+  owner /home/*/.docker/config.json r,
+  owner /run/*/user/*/docker.sock rw,
+  owner /home/*/.local/firefox-docker/** r,
+
+}
+
 ```
 
 Basically, it allows read accesses to some basic resources, such as `/etc/passwd`, as requested by docker on my `aa-logprof` rounds (without these, docker would break).
@@ -133,7 +227,7 @@ Symbolic links can point to same thing in different paths, so these will also be
 If only a single `firefox-docker` is used by the user, then it's simple to constrain it,
 but with multiple usages of `docker` for the same user, then it becomes challenging to block them all.
 
-Some sensitive data, such as `.ssh/` folder can try to be protected, like this:
+Some sensitive data, such as `.ssh/` folder can try to be protected, like this (good solution for simple programs, not docker):
 
 ```
   # default is 'deny', but we are paranoid people...

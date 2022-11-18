@@ -148,10 +148,53 @@ docker run -v /home/mynonsudouser/.ssh:/root/.ssh hello-world
 Special rules can be be created for confinement of docker process regarding secure files, disallowing its usage.
 For path-based security, one can try AppArmor instead of SELinux (better for Ubuntu 22.04 systems, that does not work with SELinux).
 
+#### If you really want to try on Ubuntu 22.04
+
+- first: run on `setenforce 0` mode
+- discover issues with critical stuff (such as graphical interface like gnome-shell), etc
+- audit2why and audit2allow are your friends!
+
+```
+grep gnome /var/log/audit/audit.log | audit2why | grep "#" | sort | uniq 
+  # setsebool -P allow_execmem 1
+  # setsebool -P allow_execstack 1
+  # setsebool -P xserver_gnome_xdm 1
+```
+
+Other general stuff, required on my short tests:
+
+```
+$ cat /var/log/audit/audit.log | audit2why | grep "#" | sort | uniq
+  # setsebool -P allow_mount_anyfile 1
+  # setsebool -P allow_polyinstantiation 1
+  # setsebool -P authlogin_nsswitch_use_ldap 1
+  # setsebool -P global_ssp 1
+```
+
+Execute these commands above to keep system working after enforcing.
+
+To generate rules based on audit2allow, do the following:
+
+```
+sudo audit2allow -a -M mylist
+# view list of rules
+cat mylist.te
+# if mylist.pp was not generated, fix (null) errors in mylist.te, then proceed
+checkmodule -M -m -o mylist.mod mylist.te
+# add the rules for selinux
+sudo semodule -i mylist.pp 
+```
+
+On Ubuntu 22.04, remember to disable apparmor and snapd (which is very bad for user experience).
+Regarding docker, if you really want to try it, use CentOS or Fedora, since they have official support for SELinux.
+
+
 ### More information
 
 Read: 
 
 - https://www.linode.com/docs/guides/how-to-install-selinux-on-ubuntu-22-04/
-- https://wiki.gentoo.org/wiki/SELinux/Tutorials/How_SELinux_controls_file_and_directory_accesses
+- `https://wiki.gentoo.org/wiki/SELinux/Tutorials/How_SELinux_controls_file_and_directory_accesses`
+- https://teamignition.us/selinux-practical-intro-to-audit2why-and-audit2allow.html
+- https://sysdig.com/blog/selinux-seccomp-falco-technical-discussion/
 

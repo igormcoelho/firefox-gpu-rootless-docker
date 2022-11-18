@@ -89,6 +89,12 @@ source ~/.bashrc
 docker run hello-world
 ```
 
+Manually testing if it works locally:
+
+```
+curl --unix-socket /run/user/$UID/docker.sock http://localhost/version
+```
+
 #### If you also want docker-compose
 
 ```
