@@ -6,6 +6,8 @@ XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
 ME=$(whoami)
 echo "Running Docker Image without GPU support: $ME/firefox"
 
+echo "test audio: speaker-test -c2 -t sine"
+
 # run without gpu
 docker run --name firefox_ubuntu_nogpu --rm \
   --net host \
