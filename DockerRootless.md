@@ -16,7 +16,10 @@ grep ^$(whoami): /etc/subuid
 #  =>  user must have 65536 sub UIDs
 grep ^$(whoami): /etc/subgid
 #  => group must have 65536 sub UIDs 
-#
+```
+
+Then, remove bad docker and install community docker:
+```
 # more deps
 sudo apt install dbus-user-session fuse-overlayfs
 #
@@ -42,6 +45,26 @@ cat /etc/apt/sources.list.d/docker.list
 sudo apt-get update
 sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin
 ```
+
+After Ubuntu 24.04, make sure AppArmor will allow your docker (replace YOURUSERNAME here 3x) and requires sudo:
+
+```
+cat <<EOT | sudo tee "/etc/apparmor.d/home.YOURUSERNAME.bin.rootlesskit"
+# ref: https://ubuntu.com/blog/ubuntu-23-10-restricted-unprivileged-user-namespaces
+abi <abi/4.0>,
+include <tunables/global>
+
+/home/YOURUSERNAME/bin/rootlesskit flags=(unconfined) {
+  userns,
+
+  # Site-specific additions and overrides. See local/README for details.
+  include if exists <local/home.YOURUSERNAME.bin.rootlesskit>
+}
+EOT
+
+sudo systemctl restart apparmor.service
+```
+
 
 At this point, we make sure docker is rootless (if you have rootful docker, follow these steps to make it rootless):
 
