@@ -46,7 +46,7 @@ sudo apt-get update
 sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin
 ```
 
-After Ubuntu 24.04, make sure AppArmor will allow your docker (replace YOURUSERNAME here 3x) and requires sudo:
+After Ubuntu 24.04, make sure AppArmor will allow your docker (replace YOURUSERNAME here 3x) and requires sudo ([Read this](https://rootlesscontaine.rs/getting-started/common/apparmor/)):
 
 ```
 cat <<EOT | sudo tee "/etc/apparmor.d/home.YOURUSERNAME.bin.rootlesskit"
