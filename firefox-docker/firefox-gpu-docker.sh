@@ -27,6 +27,10 @@ echo "CHECK IF WEBGL IS WORKING: http://get.webgl.org"
 ME=$(whoami)
 echo "Running Docker Image with GPU support: $ME/firefox"
 
+# fixes authorization error on X for Ubuntu 24.04
+xhost +Local:*
+xhost
+
 docker run --name firefox_ubuntu_gpu --rm \
   --net host \
   --device /dev/input \
@@ -38,6 +42,7 @@ docker run --name firefox_ubuntu_gpu --rm \
   -v /dev/shm:/dev/shm \
   -v /etc/machine-id:/etc/machine-id:ro \
   -v $XDG_RUNTIME_DIR/pulse:$XDG_RUNTIME_DIR/pulse:ro \
+  -e PULSE_SERVER=unix:$XDG_RUNTIME_DIR/pulse/native \
   -v $XDG_RUNTIME_DIR/bus:$XDG_RUNTIME_DIR/bus:ro \
   -v /var/lib/dbus/machine-id:/var/lib/dbus/machine-id:ro \
   -v /run/dbus:/run/dbus:ro \
